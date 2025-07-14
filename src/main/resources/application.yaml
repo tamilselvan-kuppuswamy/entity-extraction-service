@@ -58,6 +58,6 @@ entity-config:
         - tracking_number
         - issue_type
   confidenceThreshold: 0.8
-  azureOpenAiEndpoint: https://YOUR_AZURE_OPENAI_ENDPOINT
-  azureOpenAiKey: xxxxxxxxxxxxxxxxxx
+  azureOpenAiEndpoint: https://ups-jarvis-ai-foundry.cognitiveservices.azure.com/
+  azureOpenAiKey: CToGIgq9UUuTKNwCaT93P7J4FF3pmzP2PRJasy6FEWGRIQGYGOS2JQQJ99BGACYeBjFXJ3w3AAAAACOGI2co
   model: gpt-4
