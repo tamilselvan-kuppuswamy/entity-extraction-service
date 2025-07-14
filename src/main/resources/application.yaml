@@ -1,0 +1,63 @@
+
+server:
+  port: 8082
+
+entity-config:
+  cases:
+    CreateShipment:
+      allowedFields:
+        - sender_name
+        - sender_address
+        - sender_phone
+        - receiver_name
+        - receiver_address
+        - receiver_phone
+        - package_weight
+        - package_description
+        - pickup_required
+        - delivery_type
+      requiredFields:
+        - sender_name
+        - sender_address
+        - receiver_name
+        - receiver_address
+        - package_weight
+        - delivery_type
+    TrackShipment:
+      allowedFields:
+        - tracking_number
+        - sender_phone
+        - receiver_phone
+      requiredFields:
+        - tracking_number
+    ReturnShipment:
+      allowedFields:
+        - order_id
+        - receiver_address
+        - reason_for_return
+      requiredFields:
+        - order_id
+        - reason_for_return
+    RescheduleDelivery:
+      allowedFields:
+        - tracking_number
+        - new_delivery_date
+        - new_delivery_time
+        - receiver_name
+        - receiver_phone
+      requiredFields:
+        - tracking_number
+        - new_delivery_date
+    ReportIssue:
+      allowedFields:
+        - tracking_number
+        - issue_type
+        - issue_description
+        - photo_url
+      requiredFields:
+        - tracking_number
+        - issue_type
+  confidenceThreshold: 0.8
+  azureOpenAiEndpoint: https://YOUR_AZURE_OPENAI_ENDPOINT
+  azureOpenAiKey: xxxxxxxxxxxxxxxxxx
+  model: gpt-4
