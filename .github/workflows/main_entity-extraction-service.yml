@@ -30,7 +30,7 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: entity-extraction-service
+          name: java-app
           path: '${{ github.workspace }}/target/*.jar'
 
   deploy:
@@ -45,14 +45,14 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: entity-extraction-service
+          name: java-app
       
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_012FF4E251F349E8AD602F2B720399C8 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_6BA2865EDA034B4980E8FEFB147556AF }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0370056FDE4649F48DF904955EB12F22 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_03721DB9735D454D9751466C31691CD1 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_246ED2A9826F4007BFEE72D51265A4AB }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_120AE435F61B401091EE862343EBA23B }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -60,5 +60,5 @@ jobs:
         with:
           app-name: 'entity-extraction-service'
           slot-name: 'Production'
-          package: 'entity-extraction-service-1.0.0.jar'
+          package: '*.jar'
           
