@@ -25,7 +25,6 @@ public class EntityExtractionService {
 
   private final EntityExtractionConfig config;
   private final ObjectMapper objectMapper = new ObjectMapper();
-
   private OpenAIClient openAIClient;
 
   @PostConstruct
@@ -52,22 +51,25 @@ public class EntityExtractionService {
       if (caseConfig == null) {
         throw new EntityExtractionException("Unknown business use case: " + request.getUseCase());
       }
+
       Set<String> allowedFields = caseConfig.getAllowedFields();
       Set<String> requiredFields = caseConfig.getRequiredFields();
 
       Map<String, Object> extracted =
           callAzureOpenAiExtraction(
-              request.getText(), allowedFields, request.getLanguage(), correlationId);
+              request.getText(),
+              allowedFields,
+              requiredFields,
+              request.getLanguage(),
+              correlationId);
 
       Set<String> missing = new HashSet<>(requiredFields);
       missing.removeAll(extracted.keySet());
 
-      String reason = "Azure OpenAI extraction";
-
       return EntityExtractionResponse.builder()
           .extractedEntities(extracted)
           .missingFields(missing)
-          .reason(reason)
+          .reason("Azure OpenAI extraction")
           .language(StringUtils.hasText(request.getLanguage()) ? request.getLanguage() : "en")
           .build();
 
@@ -80,24 +82,33 @@ public class EntityExtractionService {
   }
 
   private Map<String, Object> callAzureOpenAiExtraction(
-      String text, Set<String> allowedFields, String language, String correlationId)
+      String text,
+      Set<String> allowedFields,
+      Set<String> requiredFields,
+      String language,
+      String correlationId)
       throws Exception {
+
     log.info("Calling Azure OpenAI with correlationId: {}", correlationId);
 
-    // Use new FunctionDefinition(name) and BinaryData for parameters
     FunctionDefinition functionDef =
         new FunctionDefinition("extract_shipment_entities")
-            .setDescription("Extract shipment-related entities from the user input.")
-            .setParameters(BinaryData.fromObject(buildFunctionSchema(allowedFields)));
+            .setDescription("Extract shipment-related entities from user input.")
+            .setParameters(
+                BinaryData.fromObject(buildFunctionSchema(allowedFields, requiredFields)));
 
-    // Must use constructor with List<ChatRequestMessage>
+    List<ChatRequestMessage> messages =
+        List.of(
+            new ChatRequestSystemMessage(
+                "You are a logistics assistant. Always extract shipment-related entities by calling the function `extract_shipment_entities`. "
+                    + "Do not respond with plain text. Return partial values if needed."),
+            new ChatRequestUserMessage(text));
+
     ChatCompletionsOptions options =
-        new ChatCompletionsOptions(List.of(new ChatRequestUserMessage(text)))
+        new ChatCompletionsOptions(messages)
             .setFunctions(List.of(functionDef))
             .setFunctionCall(FunctionCallConfig.AUTO)
             .setTemperature(0.0);
-
-    log.info("Sending request to OpenAI: {}", text);
 
     ChatCompletions completions = openAIClient.getChatCompletions(config.getModel(), options);
 
@@ -106,25 +117,27 @@ public class EntityExtractionService {
     }
 
     ChatChoice firstChoice = completions.getChoices().getFirst();
-    if (firstChoice.getMessage() == null || firstChoice.getMessage().getFunctionCall() == null) {
+    ChatResponseMessage message = firstChoice.getMessage();
+
+    if (message == null || message.getFunctionCall() == null) {
+      log.warn("GPT response missing function call: {}", message);
       throw new EntityExtractionException("No function call result in OpenAI response.");
     }
 
-    String functionCallArguments = firstChoice.getMessage().getFunctionCall().getArguments();
-
+    String functionCallArguments = message.getFunctionCall().getArguments();
     log.info("Function call arguments: {}", functionCallArguments);
 
     @SuppressWarnings("unchecked")
     Map<String, Object> extracted = objectMapper.readValue(functionCallArguments, Map.class);
 
     extracted.keySet().retainAll(allowedFields);
-
     log.info("Extracted entities: {}", extracted);
 
     return extracted;
   }
 
-  private Map<String, Object> buildFunctionSchema(Set<String> allowedFields) {
+  private Map<String, Object> buildFunctionSchema(
+      Set<String> allowedFields, Set<String> requiredFields) {
     Map<String, Object> properties = new LinkedHashMap<>();
     for (String field : allowedFields) {
       Map<String, Object> prop = new LinkedHashMap<>();
@@ -132,10 +145,12 @@ public class EntityExtractionService {
       prop.put("description", "Extracted field: " + field);
       properties.put(field, prop);
     }
+
     Map<String, Object> parameters = new LinkedHashMap<>();
     parameters.put("type", "object");
     parameters.put("properties", properties);
-    parameters.put("required", new ArrayList<>(allowedFields));
+    parameters.put("required", new ArrayList<>(requiredFields));
+
     return parameters;
   }
 }
