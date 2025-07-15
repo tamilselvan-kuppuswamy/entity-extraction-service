@@ -64,4 +64,4 @@ entity-config:
   confidenceThreshold: 0.8
   azureOpenAiEndpoint: https://ups-jarvis-ai-foundry.cognitiveservices.azure.com/
   azureOpenAiKey: CToGIgq9UUuTKNwCaT93P7J4FF3pmzP2PRJasy6FEWGRIQGYGOS2JQQJ99BGACYeBjFXJ3w3AAAAACOGI2co
-  model: gpt-4
+  model: gpt-35-turbo
