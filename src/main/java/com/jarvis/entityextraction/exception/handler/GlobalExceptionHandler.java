@@ -1,8 +1,7 @@
 package com.jarvis.entityextraction.exception.handler;
 
-import java.util.Map;
-
 import com.jarvis.entityextraction.exception.EntityExtractionException;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,7 +11,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
   @ExceptionHandler(EntityExtractionException.class)
-  public ResponseEntity<Map<String, String>> handleEntityExtractionException(EntityExtractionException ex) {
+  public ResponseEntity<Map<String, String>> handleEntityExtractionException(
+      EntityExtractionException ex) {
     log.error("Entity Extraction error: {}", ex.getMessage());
     return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
   }
