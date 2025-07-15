@@ -60,5 +60,5 @@ jobs:
         with:
           app-name: 'entity-extraction-service'
           slot-name: 'Production'
-          package: 'entity-extraction-service.jar'
+          package: 'entity-extraction-service-1.0.0.jar'
           
